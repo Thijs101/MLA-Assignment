@@ -1,0 +1,153 @@
+{
+  "n_train": 60000,
+  "n_test": 10000,
+  "n_features": 784,
+  "class_names": [
+    "T-shirt/top",
+    "Trouser",
+    "Pullover",
+    "Dress",
+    "Coat",
+    "Sandal",
+    "Shirt",
+    "Sneaker",
+    "Bag",
+    "Ankle boot"
+  ],
+  "train_class_counts": [
+    6000,
+    6000,
+    6000,
+    6000,
+    6000,
+    6000,
+    6000,
+    6000,
+    6000,
+    6000
+  ],
+  "test_class_counts": [
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000,
+    1000
+  ],
+  "tree_depth_search": {
+    "depths": [
+      "4",
+      "6",
+      "8",
+      "10",
+      "12",
+      "15",
+      "20",
+      "25",
+      "None"
+    ],
+    "train_acc": [
+      0.6542037037037037,
+      0.7358518518518519,
+      0.8040555555555555,
+      0.8496296296296296,
+      0.8891481481481481,
+      0.9434259259259259,
+      0.9856481481481482,
+      0.9951851851851852,
+      1.0
+    ],
+    "val_acc": [
+      0.653,
+      0.737,
+      0.7923333333333333,
+      0.8175,
+      0.8206666666666667,
+      0.8103333333333333,
+      0.8086666666666666,
+      0.8013333333333333,
+      0.8008333333333333
+    ],
+    "chosen_depth": "12"
+  },
+  "decision_tree": {
+    "chosen_max_depth": 12,
+    "n_leaves": 1200,
+    "fit_time_sec": 21.9,
+    "test_accuracy": 0.8028,
+    "test_macro_f1": 0.8026,
+    "per_class_f1": {
+      "T-shirt/top": 0.7652,
+      "Trouser": 0.9495,
+      "Pullover": 0.6837,
+      "Dress": 0.814,
+      "Coat": 0.6676,
+      "Sandal": 0.9059,
+      "Shirt": 0.5175,
+      "Sneaker": 0.8912,
+      "Bag": 0.9183,
+      "Ankle boot": 0.9131
+    },
+    "test_accuracy_se": 0.004
+  },
+  "rf_estimator_search": {
+    "n_estimators": [
+      10,
+      25,
+      50,
+      100,
+      200
+    ],
+    "val_acc": [
+      0.867,
+      0.8796666666666667,
+      0.8848333333333334,
+      0.8836666666666667,
+      0.8866666666666667
+    ],
+    "chosen": 200
+  },
+  "random_forest": {
+    "chosen_n_estimators": 200,
+    "fit_time_sec": 89.96,
+    "test_accuracy": 0.8779,
+    "test_macro_f1": 0.8766,
+    "oob_accuracy": 0.8841,
+    "per_class_f1": {
+      "T-shirt/top": 0.8434,
+      "Trouser": 0.9797,
+      "Pullover": 0.7841,
+      "Dress": 0.892,
+      "Coat": 0.7934,
+      "Sandal": 0.9682,
+      "Shirt": 0.6488,
+      "Sneaker": 0.9404,
+      "Bag": 0.9667,
+      "Ankle boot": 0.9493
+    },
+    "test_accuracy_se": 0.0033
+  },
+  "gradient_boosting_comparison": {
+    "per_class_f1": {
+      "T-shirt/top": 0.8481,
+      "Trouser": 0.9823,
+      "Pullover": 0.8201,
+      "Dress": 0.9045,
+      "Coat": 0.817,
+      "Sandal": 0.9783,
+      "Shirt": 0.691,
+      "Sneaker": 0.958,
+      "Bag": 0.979,
+      "Ankle boot": 0.9654
+    },
+    "model": "HistGradientBoostingClassifier (default settings)",
+    "fit_time_sec": 155.67,
+    "test_accuracy": 0.8945,
+    "test_macro_f1": 0.8944,
+    "test_accuracy_se": 0.0031
+  }
+}
