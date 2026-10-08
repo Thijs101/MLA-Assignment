@@ -60,7 +60,7 @@ Fashion-MNIST \citep{xiao2017} has 70{,}000 grayscale $28\times28$ images of ten
 \label{fig:data}
 \end{figure}
 
-All hyperparameters are tuned with 3-fold cross-validation (CV) on the 60{,}000 training images. Final models are refitted on all training images and every model is evaluated once on the same untouched test set. Next to accuracy, which is fair with balanced classes, we use per-class F1 scores and confusion matrices.
+All hyperparameters are tuned with 3-fold cross-validation (CV) on the 60{,}000 training images. Final models are refitted on all training images and every model is evaluated once on the same untouched test set. Next to accuracy, which is fair with balanced classes, we report confusion matrices and for each class the F1 score $F_1=2PR/(P+R)$, which combines precision $P$ (the share of images given a label that truly belong to it) and recall $R$ (the share of a class that is recognised); the average F1 is the mean of the ten per-class scores.
 
 % ------------------------------------------------------------------ 2
 \section{Part 1: decision tree and tree ensemble}
@@ -72,40 +72,24 @@ The errors are very uneven (Figure~\ref{fig:cm}a, Table~\ref{tab:perclass}). Tro
 
 \subsection{Ensemble method (1b)}
 \label{sec:ensemble}
-\para{Choice and motivation.} Tree ensembles come in two kinds. Bagging trains many deep trees independently and averages them, which mainly reduces variance; boosting adds small trees one by one, each correcting the errors of the previous ones, which mainly reduces bias. Section~\ref{sec:tree} showed that our single decision tree mainly suffers from variance: grown fully it fits the training data perfectly (100\%) but reaches only 78.9\% in CV. Bagging is the natural remedy for this. Boosting mainly targets bias instead, overfits as the number of rounds grows unless the learning rate and number of rounds are tuned carefully, and has to build its trees one after the other. We use \pkg{GradientBoostingClassifier} with default settings only as a reference.
+\para{Choice and motivation.} Tree ensembles come in two kinds. Bagging trains many deep trees independently and averages them, which mainly reduces variance; boosting adds small trees one by one, each correcting the errors of the previous ones, which mainly reduces bias. Section~\ref{sec:tree} showed that our single decision tree mainly suffers from variance: grown fully it fits the training data perfectly (100\%) but reaches only 78.9\% in CV. Bagging is the natural remedy for this. Boosting mainly targets bias instead, has more settings that interact (learning rate, number of rounds, tree depth) and has to build its trees one after the other. As references we fit two boosting models with default settings: \pkg{GradientBoostingClassifier} and XGBoost.
 
 Within bagging we choose a \textbf{random forest} \citep{breiman2001}. Averaging trees does not change the bias and never increases the variance, but how much it lowers the variance depends on how correlated the trees are. With 784 correlated pixels, plain bagged trees tend to use the same strong pixels near the root and become very similar. A random forest considers only a random subset of $m<p$ pixels at every split, so a strong pixel cannot dominate most trees and the trees become less correlated.
 
-\para{Implementation.} We use \pkg{RandomForestClassifier} with fully grown trees and first tune the number of trees with $m=\sqrt{p}=28$: CV accuracy rises quickly up to 50 trees (87.7\%) and only slowly after that (88.1\% at 200 trees, against 87.8\% on the test set later, Figure~\ref{fig:tuning}b), and more trees cannot cause overfitting, so the final forest has 200 trees (on average 38 levels deep, about 5{,}000 leaves). Because 50 trees are already enough to compare settings, and much faster, we then vary $m$ from 7 to 112 with 50 trees each and compare with plain bagging ($m=p=784$, \pkg{BaggingClassifier}) of the same size (Figure~\ref{fig:tuning}c). CV accuracy rises steadily from 86.9\% at $m=7$ via 87.7\% at $m=28$ to 87.9\% at $m=112$, but drops to 87.1\% for plain bagging. The single trees show why: with $m=7$ they are weak (73.0\% accuracy) but their errors are less correlated (0.33), bagged trees are stronger (77.6\%) but more correlated (0.41), and $m=28$ lies in between (75.9\%, 0.36). Since $m=112$ beats $m=28$ by only 0.3 points, about the spread between folds, while each split has to search 4 times as many pixels, we keep $m=\sqrt{p}=28$, the standard choice for classification and the default in \pkg{scikit-learn}.
+\para{Implementation.} We use \pkg{RandomForestClassifier} with fully grown trees. Its key setting is $m$ (\pkg{max\_features}), the number of pixels, drawn at random from all $p=784$, that each split can consider. We first tune the number of trees with $m=\sqrt{p}=28$: CV accuracy rises quickly up to 50 trees (87.7\%) and only slowly after that (88.1\% at 200 trees, against 87.8\% on the test set later, Figure~\ref{fig:tuning}b), and more trees cannot cause overfitting, so the final forest has 200 trees. Because 50 trees are already enough to compare settings, and much faster, we then vary $m$ from 7 to 112 with 50 trees each and compare with plain bagging ($m=p=784$, \pkg{BaggingClassifier}) of the same size (Figure~\ref{fig:tuning}c). CV accuracy rises steadily from 86.9\% at $m=7$ via 87.7\% at $m=28$ to 87.9\% at $m=112$, but drops to 87.1\% for plain bagging. The single trees show why: with $m=7$ they are weak (73.0\% accuracy) but their errors are less correlated (0.33), bagged trees are stronger (77.6\%) but more correlated (0.41), and $m=28$ lies in between (75.9\%, 0.36). Since $m=112$ beats $m=28$ by only 0.3 points, about the spread between folds, while training a 200-tree forest takes 4.1 times as long, we keep $m=\sqrt{p}=28$, the standard choice for classification and the default in \pkg{scikit-learn}.
 
-\begin{table}[h]
-\centering
-\small
-\begin{tabular}{lcccc}
-\toprule
-Model & Test acc. & Macro F1 & Shirt F1 & With noise \\
-\midrule
-Closest average image (baseline) & 67.7\% & 0.672 & 0.26 & -- \\
-Decision tree (pruned)           & 80.8\% & 0.807 & 0.54 & 45.9\% \\
-Random forest (200 trees)        & 87.8\% & 0.877 & 0.65 & 77.1\% \\
-Gradient boosting (reference)    & 86.7\% & 0.866 & 0.64 & 70.9\% \\
-\bottomrule
-\end{tabular}
-\caption{Test results. \emph{With noise}: Gaussian noise ($\sigma=0.1$) added to the test images.}
-\label{tab:results}
-\end{table}
 
-\para{Expected versus observed effects.} We expected the forest to remove most of the variance but not the pixel-level bias, so the same classes should stay difficult, and this is what we found. Accuracy rises from 80.8\% to 87.8\%: the forest corrects 965 of the tree's mistakes and makes 263 new ones. Every class improves (Shirt F1 0.54$\to$0.65), but the share of errors among the upper-body classes grows from 56\% to 65\% (Figure~\ref{fig:cm}b): the forest mostly removed the scattered mistakes. To test robustness, for example to lower-quality photos, we add Gaussian noise ($\sigma=0.1$) to every test pixel: the tree drops to 45.9\%, since splits such as its first one test whether a pixel is empty, while the forest, which averages over many pixels, keeps 77.1\%. SHAP values of the final forest, computed with \pkg{TreeExplainer} on 1{,}000 test images (100 per class), and its impurity-based importance agree (correlation 0.91, Figure~\ref{fig:importance}): the forest relies on outline pixels at the neckline, the sleeves and the gap between trouser legs. On the first CV fold, a forest on only the 400 pixels with the highest SHAP values reaches 87.4\% against 87.3\% with all pixels, and 100 pixels still give 84.9\%. The pixels pushing a shirt towards Shirt are spread thinly over neckline and hem (Figure~\ref{fig:importance}c--d). Gradient boosting with default settings reaches 86.7\%, slightly below the forest; its training accuracy (90.3\%) is close to its test accuracy and both still rose after 100 rounds (Figure~\ref{fig:gb}), so its small depth-3 trees were still reducing bias. With noise it falls to 70.9\%: like the tree it relies on single-pixel splits, without averaging over independent trees.
+\para{Expected versus observed effects.} We expected the forest to remove most of the variance but not the pixel-level bias, so the same classes should stay difficult, and this is what we found. Accuracy rises from 80.8\% to 87.8\%: the forest corrects 965 of the tree's mistakes and makes 263 new ones. Every class improves (Shirt F1 0.54$\to$0.65), but the share of errors among the upper-body classes grows from 56\% to 65\% (Figure~\ref{fig:cm}b): the forest mostly removed the scattered mistakes. To test robustness, for example to lower-quality photos, we add Gaussian noise ($\sigma=0.1$) to every test pixel: the tree drops to 45.9\%, since splits such as its first one test whether a pixel is empty, while the forest, which averages over many pixels, keeps 77.1\%. SHAP values of the final forest, computed with \pkg{TreeExplainer} on 1{,}000 test images (100 per class), and its impurity-based importance agree (correlation 0.91, Figure~\ref{fig:importance}): the forest relies on outline pixels at the neckline, the sleeves and the gap between trouser legs. On the first CV fold, a forest on only the 400 pixels with the highest SHAP values does as well as one on all 784 pixels (87.3\%), and 100 pixels still give 84.8\%. The pixels that push a shirt towards Shirt lie at the collar, along the button line and at the hem (Figure~\ref{fig:importance}c), small details that move from image to image. Gradient boosting with default settings (depth-3 trees) stays below the forest (86.7\%, 71.0\% with noise); its training and test accuracy were close and still rising after 100 rounds (Figure~\ref{fig:gb}), so its small trees are limited by bias. XGBoost \citep{xgboost} with default settings does beat the forest (89.8\%, 78.1\% with noise). Its deeper (depth-6) trees with penalised leaf values probably lower the bias while keeping the variance in check: it fits 99.97\% of the training images and still generalises better. So the forest beats boosting with small trees, confirming that variance was the tree's main problem, but part of the remaining error is bias that a well-built tree ensemble can still reduce.
 
-\para{Difficulties.} \pkg{GradientBoostingClassifier} fits ten trees per round (one per class) on 784 pixels and took 89 minutes, so we could not tune it. SHAP values are slow for 200 deep trees, so we split the computation over all processor cores.
+\para{Difficulties.} \pkg{GradientBoostingClassifier} fits ten trees per round (one per class) on a single core and took 97 minutes, so we could not tune it; for a fair comparison XGBoost is not tuned either. SHAP values are slow for 200 deep trees, so we split the computation over all processor cores.
 
 % ------------------------------------------------------------------ 3
 \section{Part 2: a deep learning approach}
 \subsection{Shortcomings of the tree-based approach (2c)}
-(i) \textbf{No use of image structure.} Every split looks at one pixel, so the correlation between neighbours is ignored and a collar needs a long chain of splits. (ii) \textbf{No position invariance.} What is learned about one pixel does not carry over to its neighbour, so a collar two pixels further left must be learned again. (iii) \textbf{Remaining bias.} Beyond about 50 trees accuracy hardly improves, yet 65\% of the remaining mistakes are upper-body confusions and boosting, which targets bias, was still improving after 100 rounds. The model needs better features, not more trees.
+(i) \textbf{No use of image structure.} Every split looks at one pixel, so the correlation between neighbours is ignored and a collar needs a long chain of splits. (ii) \textbf{No position invariance.} What is learned about one pixel does not carry over to its neighbour, so a collar two pixels further left must be learned again. (iii) \textbf{Remaining bias.} Beyond about 50 trees accuracy hardly improves, yet 65\% of the remaining mistakes are upper-body confusions ; XGBoost, which also reduces bias, does better (89.8\%) but still splits on single pixels and keeps Shirt as its weakest class by far (F1 0.71). The model needs better features, not more trees.
 
 \subsection{Proposed design: a convolutional neural network (2d)}
-These shortcomings lead us to a \textbf{convolutional neural network} (CNN) \citep{lecun1998}, which we would build in Keras (Table~\ref{tab:cnn} in Appendix~\ref{app:results}). Small $3\times3$ filters on the $28\times28$ image learn local patterns such as edges and collar shapes, using the strong correlation between neighbouring pixels that the trees ignore (i). Each filter slides over the whole image, so a pattern is found wherever it appears, and max pooling per $2\times2$ region makes the output less sensitive to small shifts (ii). The second convolution combines these patterns into larger parts such as sleeves and collars, the higher-level features the forest could not build (iii). Pooling twice, to $7\times7$, halves the dense layer compared with a single block. Against overfitting we use dropout (which acts like an ensemble, as in our forest), an L2 penalty, early stopping and data augmentation with class-preserving flips and two-pixel shifts, which teaches shift invariance (ii). A fully connected network or an autoencoder works on flattened pixels and keeps shortcomings (i) and (ii); a network on the pooled $14\times14$ image loses the small details that separate Shirt from Pullover.
+These shortcomings lead us to a \textbf{convolutional neural network} (CNN) \citep{lecun1998}, which we would build in Keras (Table~\ref{tab:cnn} in Appendix~\ref{app:results}). Small $3\times3$ filters on the $28\times28$ image learn local patterns such as edges and collar shapes, using the strong correlation between neighbouring pixels that the trees ignore (i). Each filter slides over the whole image, so a pattern is found wherever it appears, and max pooling per $2\times2$ region makes the output less sensitive to small shifts (ii). The second convolution combines these patterns into larger parts such as sleeves and collars, the higher-level features the forest could not build (iii). Pooling twice, to $7\times7$, halves the dense layer compared with a single block. To avoid overfitting, we combine: dropout (randomly turns off neurons, acting like an ensemble of many smaller networks, similar to a random forest), an L2 penalty (Ridge), early stopping (stops training before the model starts memorizing instead of generalizing), and data augmentation (flipping images or shifting them a couple of pixels, so the model learns that the same object still looks the same when moved slightly, (ii)). A fully connected network or an autoencoder works on flattened pixels and keeps shortcomings (i) and (ii); a network on the pooled $14\times14$ image loses the small details that separate Shirt from Pullover.
 
 
 
@@ -115,13 +99,14 @@ We reshape the images to $28\times28\times1$, one-hot encode the labels and use 
 We expect about 92\% test accuracy: eight of the ten two-block CNNs in the public benchmark reach 91.6--93.9\% \citep{fmnistbenchmark}. Most of the gain should go to Shirt, Pullover and Coat, but Shirt will stay the weakest class, as some images are ambiguous even for people (83.5\% human accuracy, \citealp{fmnistbenchmark}). A single untuned run of this design (Appendix~\ref{app:cnn}) reaches 90.7\% (Shirt F1 0.74) against 86.6\% for a fully connected network; tuning, which we did not do, should close most of the gap to the benchmark.
 
 \section{Conclusion}
-A single decision tree reaches 80.8\% test accuracy. It overfits strongly, and because it only checks single pixels it struggles to tell T-shirts, pullovers, coats and shirts apart. A random forest, whose random pixel subsets make its trees less correlated, removes most of this variance: it makes 37\% fewer errors than the tree and is far more robust to noise, while plain bagging and gradient boosting with default settings do not beat it. The mistakes that remain are mostly confusions between upper-body garments, a bias that comes from working with single pixels and that more trees do not remove. A CNN learns local features that tolerate small shifts instead; a single untuned run of our design already reaches 90.7\%, so we expect a tuned version to reduce the remaining error clearly, although some shirts will stay ambiguous at this resolution.
+A single decision tree reaches 80.8\% test accuracy. It overfits strongly and, checking single pixels, struggles to tell T-shirts, pullovers, coats and shirts apart. A random forest removes most of this variance: it makes 37\% fewer errors, is far more robust to noise and beats plain bagging and gradient boosting with small trees. XGBoost does better (89.8\%), so part of the remaining error is bias that deeper, penalised boosted trees can still reduce. Most remaining mistakes are confusions between upper-body garments, which come from working with single pixels. A CNN learns local features that tolerate small shifts; a single untuned run of our design already reaches 90.7\%, above every tree model, so we expect a tuned version to cut the remaining error clearly, although some shirts will stay ambiguous at this resolution.
 
 % ------------------------------------------------------------------ references
 \begin{thebibliography}{99}
 \setlength{\itemsep}{1pt}
 \small
 \bibitem[Breiman(2001)]{breiman2001} Breiman, L. (2001). Random forests. \textit{Machine Learning}, 45(1), 5--32.
+\bibitem[Chen and Guestrin(2016)]{xgboost} Chen, T. and Guestrin, C. (2016). XGBoost: a scalable tree boosting system. \textit{Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining}, 785--794.
 \bibitem[LeCun et~al.(1998)]{lecun1998} LeCun, Y., Bottou, L., Bengio, Y. and Haffner, P. (1998). Gradient-based learning applied to document recognition. \textit{Proceedings of the IEEE}, 86(11), 2278--2324.
 \bibitem[Pedregosa et~al.(2011)]{sklearn} Pedregosa, F. et al. (2011). Scikit-learn: machine learning in Python. \textit{Journal of Machine Learning Research}, 12, 2825--2830.
 \bibitem[Xiao et~al.(2017)]{xiao2017} Xiao, H., Rasul, K. and Vollgraf, R. (2017). Fashion-MNIST: a novel image dataset for benchmarking machine learning algorithms. \textit{arXiv:1708.07747}.
@@ -133,6 +118,26 @@ A single decision tree reaches 80.8\% test accuracy. It overfits strongly, and b
 \appendix
 \section{Figures and tables}
 \label{app:results}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & Test & Average & Shirt & \multicolumn{2}{c}{With noise} & Training \\
+\cmidrule(lr){5-6}
+Model & acc. & F1 & F1 & $\sigma=0.1$ & $\sigma=0.2$ & time \\
+\midrule
+Closest average image (baseline) & 67.7\% & 0.672 & 0.26 & -- & -- & $<$1 s \\
+Decision tree (pruned)           & 80.8\% & 0.807 & 0.54 & 45.9\% & 36.0\% & 44 s \\
+Random forest (200 trees)        & 87.8\% & 0.877 & 0.65 & 77.1\% & 60.4\% & 54 s \\
+Gradient boosting (default)      & 86.7\% & 0.866 & 0.64 & 71.0\% & 55.5\% & 97 min \\
+XGBoost (default)                & 89.8\% & 0.898 & 0.71 & 78.1\% & 65.7\% & 4 min \\
+\bottomrule
+\end{tabular}
+\caption{Test results. \emph{With noise}: Gaussian noise with standard deviation $\sigma$ added to the test images. Training on all training images on the same laptop with 8 cores (the forest and XGBoost use all of them, the other models one).}
+\label{tab:results}
+\end{table}
 
 \begin{figure}[H]
 \centering
@@ -174,22 +179,22 @@ A single decision tree reaches 80.8\% test accuracy. It overfits strongly, and b
 \begin{table}[H]
 \centering
 \small
-\begin{tabular}{lccccc}
+\begin{tabular}{lcccccc}
 \toprule
-Class & Avg.\ image & Tree & Random forest & Gradient boosting & CNN check \\
+Class & Avg.\ image & Tree & Random forest & Grad.\ boosting & XGBoost & CNN check \\
 \midrule
-T-shirt/top & 0.698 & 0.785 & 0.843 & 0.823 & 0.851 \\
-Trouser & 0.924 & 0.956 & 0.980 & 0.977 & 0.985 \\
-Pullover & 0.491 & 0.685 & 0.784 & 0.767 & 0.863 \\
-Dress & 0.726 & 0.802 & 0.892 & 0.874 & 0.907 \\
-Coat & 0.538 & 0.673 & 0.793 & 0.774 & 0.844 \\
-Sandal & 0.606 & 0.904 & 0.968 & 0.962 & 0.977 \\
-Shirt & 0.263 & 0.541 & 0.649 & 0.642 & 0.738 \\
-Sneaker & 0.790 & 0.897 & 0.940 & 0.937 & 0.955 \\
-Bag & 0.825 & 0.907 & 0.967 & 0.959 & 0.986 \\
-Ankle boot & 0.864 & 0.921 & 0.949 & 0.946 & 0.965 \\
+T-shirt/top & 0.698 & 0.785 & 0.843 & 0.823 & 0.857 & 0.851 \\
+Trouser & 0.924 & 0.956 & 0.980 & 0.977 & 0.983 & 0.985 \\
+Pullover & 0.491 & 0.685 & 0.784 & 0.766 & 0.820 & 0.863 \\
+Dress & 0.726 & 0.802 & 0.892 & 0.874 & 0.909 & 0.907 \\
+Coat & 0.538 & 0.673 & 0.793 & 0.774 & 0.829 & 0.844 \\
+Sandal & 0.606 & 0.904 & 0.968 & 0.962 & 0.978 & 0.977 \\
+Shirt & 0.263 & 0.541 & 0.649 & 0.642 & 0.709 & 0.738 \\
+Sneaker & 0.790 & 0.897 & 0.940 & 0.937 & 0.957 & 0.955 \\
+Bag & 0.825 & 0.907 & 0.967 & 0.959 & 0.976 & 0.986 \\
+Ankle boot & 0.864 & 0.921 & 0.949 & 0.946 & 0.964 & 0.965 \\
 \midrule
-Macro F1 & 0.672 & 0.807 & 0.877 & 0.866 & 0.907 \\
+Average F1 & 0.672 & 0.807 & 0.877 & 0.866 & 0.898 & 0.907 \\
 \bottomrule
 \end{tabular}
 \caption{Per-class F1 scores on the test set.}
@@ -228,10 +233,10 @@ Total & & 490{,}876 \\
 \section{How to run the code}
 \label{app:code}
 \raggedright
-The file \pkg{code.zip} contains two scripts. \pkg{part1\_trees.py} runs all of Part~1: the data analysis, the decision tree, the random forest and bagging, the noise check, the SHAP values, the gradient boosting reference and the training times. It writes all numbers to \pkg{results/part1.json} and produces Figures~\ref{fig:data}--\ref{fig:gb}. \pkg{part2\_cnn\_check.py} trains the proposed CNN and the fully connected network once (Figure~\ref{fig:cnnhist}). The data are loaded with \pkg{keras.datasets.fashion\_mnist.load\_data()}, which downloads Fashion-MNIST on the first run. To reproduce the results:
+The file \pkg{code.zip} contains two scripts. \pkg{part1\_trees.py} runs all of Part~1: the data analysis, the decision tree, the random forest and bagging, the noise check, the SHAP values, the two boosting references and the training times. It writes all numbers to \pkg{results/part1.json} and produces Figures~\ref{fig:data}--\ref{fig:gb}. \pkg{part2\_cnn\_check.py} trains the proposed CNN and the fully connected network once (Figure~\ref{fig:cnnhist}). The data are loaded with \pkg{keras.datasets.fashion\_mnist.load\_data()}, which downloads Fashion-MNIST on the first run. To reproduce the results:
 \begin{enumerate}[leftmargin=*,itemsep=1pt,topsep=2pt]
-\item Install Python 3.11 or newer and the packages \pkg{numpy} (2.4.4), \pkg{scikit-learn} (1.8.0), \pkg{matplotlib} (3.10.9), \pkg{shap} (0.52.0) and \pkg{tensorflow} (2.21.0), for example with \pkg{pip install}.
-\item From inside \pkg{code/}, run \pkg{python part1\_trees.py} (about 2.5 hours on a laptop, most of it for gradient boosting) and \pkg{python part2\_cnn\_check.py} (about one hour).
+\item Install Python 3.11 or newer and the packages \pkg{numpy} (2.4.4), \pkg{scikit-learn} (1.8.0), \pkg{matplotlib} (3.10.9), \pkg{shap} (0.52.0), \pkg{xgboost} (3.4.1) and \pkg{tensorflow} (2.21.0), for example with \pkg{pip install}.
+\item From inside \pkg{code/}, run \pkg{python part1\_trees.py} (about 3 hours on a laptop, most of it for gradient boosting) and \pkg{python part2\_cnn\_check.py} (about one hour).
 \end{enumerate}
 All random seeds are fixed (\pkg{random\_state=42}), so the numbers in this report are reproduced with these package versions.
 

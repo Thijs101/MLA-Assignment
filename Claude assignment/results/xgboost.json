@@ -1,0 +1,23 @@
+{
+  "test_accuracy": 0.8985,
+  "train_accuracy": 0.9997,
+  "test_macro_f1": 0.8981,
+  "per_class_f1": {
+    "T-shirt/top": 0.8566,
+    "Trouser": 0.9834,
+    "Pullover": 0.8198,
+    "Dress": 0.9095,
+    "Coat": 0.8285,
+    "Sandal": 0.9782,
+    "Shirt": 0.7086,
+    "Sneaker": 0.957,
+    "Bag": 0.976,
+    "Ankle boot": 0.9636
+  },
+  "noise_robustness_test_acc": {
+    "0.1": 0.7812,
+    "0.2": 0.6568
+  },
+  "fit_sec": 235.7,
+  "n_cpu_cores": 8
+}
