@@ -1,32 +1,25 @@
-# MLA assignment - Part 1 code
+# MLA final project - code
 
-Reproduces every number and figure in the report (decision tree and random
-forest on Fashion-MNIST).
+Two scripts:
 
-## Files
+- `part1_trees.py` - all of Part 1: data analysis (class averages, k-means,
+  pixel correlations), decision tree (3-fold CV over max_depth and
+  min_samples_leaf, cost-complexity pruning), random forest and bagging
+  (3-fold CV over the number of trees and the subset size m), noise check,
+  SHAP values of the final forest, pixel selection, gradient boosting with
+  default settings and the training times. Writes `../results/part1.json`
+  and the figures in `../figures/`.
+- `part2_cnn_check.py` - trains the proposed CNN and a fully connected network
+  once as a check of the Part 2 design. Writes `../results/part2.json` and
+  `../figures/cnn_history.png`.
 
-- `data_utils.py` - reads the four Fashion-MNIST `idx-ubyte.gz` files into
-  numpy arrays.
-- `run_analysis.py` - full pipeline: loads the data, tunes and evaluates the
-  decision tree (Part 1a), tunes and evaluates the random forest (Part 1b),
-  fits a gradient boosting model as a reference point for the ensemble-choice
-  discussion, and writes all figures and metrics to disk.
-- `requirements.txt` - Python package versions used.
+The data are loaded with `keras.datasets.fashion_mnist.load_data()`, which
+downloads Fashion-MNIST the first time.
 
 ## How to run
 
-1. Download the four Fashion-MNIST files from
-   https://github.com/zalandoresearch/fashion-mnist/tree/master/data/fashion
-   (`train-images-idx3-ubyte.gz`, `train-labels-idx1-ubyte.gz`,
-   `t10k-images-idx3-ubyte.gz`, `t10k-labels-idx1-ubyte.gz`) into a `data/`
-   folder next to this `code/` folder.
-2. `pip install -r requirements.txt`
-3. `python run_analysis.py`
+    pip install -r requirements.txt
+    python part1_trees.py        # about 2.5 hours on a laptop
+    python part2_cnn_check.py    # about 1 hour
 
-This writes:
-
-- `../results/metrics.json` - every number quoted in the report.
-- `../figures/*.png` - every figure used in the report.
-
-Total runtime on a standard laptop CPU is roughly 10 minutes, dominated by
-fitting the 200-tree random forest and the gradient boosting reference model.
+All random seeds are fixed (42).

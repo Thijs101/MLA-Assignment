@@ -1,0 +1,37 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Technology Statement\par}
+\vspace{0.3cm}
+{\large Clothing Classification on Fashion-MNIST\par}
+\vspace{0.5cm}
+Thijs Niekerk (SNR 2125613) \quad$\cdot$\quad Pjotr Martens (SNR 2080478)\\[2pt]
+Machine Learning Analytics, Final Project \quad$\cdot$\quad Tilburg University \quad$\cdot$\quad October 2026
+\end{center}
+\vspace{0.4cm}
+
+This statement accompanies our submission for the Machine Learning Analytics final project on Fashion-MNIST classification, in line with the course's and Tilburg University's policy on the use of generative AI and other technology in coursework.
+
+\textbf{Software and libraries.} All code was written in Python 3 using \texttt{numpy}, \texttt{matplotlib}, \texttt{scikit-learn} (Pedregosa et al., 2011), \texttt{shap} and Keras (TensorFlow), the latter only for a one-off check of the Part 2 design. The data are loaded with Keras' built-in Fashion-MNIST loader (Xiao, Rasul \& Vollgraf, 2017). The report was typeset in \LaTeX{}.
+
+\textbf{Use of generative AI.} We used Claude (Anthropic), a generative AI assistant, during this project. It helped us draft and extend the data-loading, model-training and plotting code in \texttt{code/}, suggest additional checks on our analysis (such as the comparison of subset sizes in the random forest, the noise check and the SHAP-based pixel selection), typeset the report and figures, and draft and revise parts of the report text based on the results our code produced. Every reported number and figure comes from actually running the submitted code. We reviewed, checked and edited the code, the analysis and the text ourselves, and we take full responsibility for the correctness and originality of the final submission.
+
+\textbf{Other sources.} External material beyond standard library documentation, such as the published Fashion-MNIST benchmark results used in Part 2, is cited in the report's reference list.
+
+\vspace{1em}
+We declare that this statement accurately reflects how this submission was produced.
+
+\vspace{2.5em}
+\begin{tabular}{@{}p{6.5cm}p{1cm}p{6.5cm}@{}}
+\hrulefill & & \hrulefill \\
+Thijs Niekerk & & Pjotr Martens \\
+\end{tabular}
+
+\end{document}

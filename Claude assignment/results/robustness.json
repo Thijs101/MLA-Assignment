@@ -1,0 +1,65 @@
+{
+  "ccp_alpha": [
+    {
+      "ccp_alpha": 0.0,
+      "val_acc": 0.8008,
+      "n_leaves": 4499,
+      "depth": 45
+    },
+    {
+      "ccp_alpha": 5e-05,
+      "val_acc": 0.8122,
+      "n_leaves": 2001,
+      "depth": 28
+    },
+    {
+      "ccp_alpha": 0.0001,
+      "val_acc": 0.8178,
+      "n_leaves": 777,
+      "depth": 21
+    },
+    {
+      "ccp_alpha": 0.0002,
+      "val_acc": 0.8178,
+      "n_leaves": 276,
+      "depth": 15
+    },
+    {
+      "ccp_alpha": 0.0003,
+      "val_acc": 0.8162,
+      "n_leaves": 195,
+      "depth": 14
+    },
+    {
+      "ccp_alpha": 0.0005,
+      "val_acc": 0.8042,
+      "n_leaves": 116,
+      "depth": 13
+    },
+    {
+      "ccp_alpha": 0.001,
+      "val_acc": 0.7878,
+      "n_leaves": 69,
+      "depth": 11
+    }
+  ],
+  "depth12_root_split": {
+    "pixel_row": 7,
+    "pixel_col": 11,
+    "threshold": 0.029
+  },
+  "rf_max_features_50_trees": [
+    {
+      "max_features": 14,
+      "val_acc": 0.878
+    },
+    {
+      "max_features": 28,
+      "val_acc": 0.8848
+    },
+    {
+      "max_features": 56,
+      "val_acc": 0.887
+    }
+  ]
+}
